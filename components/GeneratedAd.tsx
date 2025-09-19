@@ -1,10 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import { Download, Edit, Type, Shuffle, ImagePlus } from "lucide-react";
+import { Download, Type, Shuffle, ImagePlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import type { GenerateAdResponse, AdPrompt } from "@/lib/types";
+import type { GenerateAdResponse } from "@/lib/types";
 import LogoEditor from "./LogoEditor";
 import { MorphPanel } from "@/components/ui/ai-edit-input";
 

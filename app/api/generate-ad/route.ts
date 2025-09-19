@@ -130,7 +130,7 @@ export async function POST(request: NextRequest) {
 }
 
 // Helper function to transform Amazon product data to ProductData format
-function transformToProductData(productData: any): {
+function transformToProductData(productData: unknown): {
   title: string;
   description: string;
   price: string;
@@ -142,13 +142,22 @@ function transformToProductData(productData: any): {
     productData = productData[0];
   }
 
+  // Type assertion for unknown data
+  const data = productData as Record<string, unknown>;
+
   // If it's already in ProductData format, return as is
-  if (productData.title && productData.description && productData.price && typeof productData.price === 'string') {
-    return productData;
+  if (data.title && data.description && data.price && typeof data.price === 'string') {
+    return {
+      title: data.title as string,
+      description: data.description as string,
+      price: data.price as string,
+      features: data.features as string[] || [],
+      imageUrl: data.imageUrl as string || ''
+    };
   }
 
   // Transform Amazon product data
-  const amazonProduct = productData as AmazonProduct;
+  const amazonProduct = data as AmazonProduct;
   
   return {
     title: amazonProduct.title || 'Product',

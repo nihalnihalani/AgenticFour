@@ -90,26 +90,33 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Transform the data to match your expected format
-    const transformedData = items.map((item: any) => ({
-      title: item.title,
-      url: item.url,
-      asin: item.asin,
-      price: item.price,
-      inStock: item.inStock,
-      brand: item.brand,
-      stars: item.stars,
-      reviewsCount: item.reviewsCount,
-      thumbnailImage: item.thumbnailImage,
-      highResolutionImages: item.highResolutionImages,
-      description: item.description,
-      features: item.features,
-      attributes: item.attributes,
-      delivery: item.delivery,
-      seller: item.seller,
-      // Include all other relevant fields from the response
-      ...item
-    }));
+    // Transform the data to match AmazonProduct format
+    const transformedData = items.map((item: unknown) => {
+      const itemData = item as Record<string, unknown>;
+      return {
+        title: itemData.title as string | undefined,
+        url: itemData.url as string | undefined,
+        asin: itemData.asin as string | undefined,
+        price: itemData.price as { value?: number; currency?: string } | undefined,
+        inStock: itemData.inStock as boolean | undefined,
+        brand: itemData.brand as string | undefined,
+        stars: itemData.stars as number | undefined,
+        reviewsCount: itemData.reviewsCount as number | undefined,
+        thumbnailImage: itemData.thumbnailImage as string | undefined,
+        highResolutionImages: itemData.highResolutionImages as string[] | undefined,
+        description: itemData.description as string | null | undefined,
+        features: itemData.features as string[] | undefined,
+        attributes: itemData.attributes as Array<{ key?: string; value?: string }> | undefined,
+        delivery: itemData.delivery as string | undefined,
+        seller: itemData.seller as {
+          name?: string;
+          id?: string;
+          url?: string;
+          reviewsCount?: number | null;
+          averageRating?: number | null;
+        } | undefined,
+      };
+    });
 
     return NextResponse.json<ScrapeResponse>({
       success: true,
