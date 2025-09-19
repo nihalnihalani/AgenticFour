@@ -101,11 +101,11 @@ export type AmazonProduct = z.infer<typeof AmazonProductSchema>;
 
 // Legacy schema for backward compatibility
 export const ProductDataSchema = z.object({
-  title: z.string().min(1, "El título es requerido"),
-  description: z.string().min(10, "La descripción debe tener al menos 10 caracteres"),
-  price: z.string().min(1, "El precio es requerido"),
+  title: z.string().min(1, "Title is required"),
+  description: z.string().min(10, "Description must be at least 10 characters"),
+  price: z.string().min(1, "Price is required"),
   features: z.array(z.string()),
-  imageUrl: z.string().url("URL de imagen inválida").or(z.literal("")),
+  imageUrl: z.string().url("Invalid image URL").or(z.literal("")),
 });
 
 export type ProductData = z.infer<typeof ProductDataSchema>;
@@ -131,6 +131,7 @@ export type AdPrompt = z.infer<typeof AdPromptSchema>;
 export interface ScrapeResponse {
   success: boolean;
   data?: ProductData | AmazonProduct | AmazonProduct[];
+  rawData?: AmazonProduct; // Raw Amazon product data for additional information like high-res images
   error?: string;
 }
 
@@ -160,3 +161,84 @@ export interface AppConfig {
   firecrawlEnabled: boolean;
   geminiEnabled: boolean;
 }
+
+// Video Generation Types
+export const VideoAvatarSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  imageUrl: z.string(),
+  gender: z.enum(['male', 'female']),
+  description: z.string().optional(),
+  category: z.array(z.string()).optional(), // Categories like 'Finance', 'Education', 'Beauty', etc.
+  pose: z.enum(['sitting', 'standing']).optional(),
+  isPremium: z.boolean().optional(),
+  isFavorite: z.boolean().optional(),
+  videoImageUrl: z.string().optional(), // High-quality image for video generation
+});
+
+export type VideoAvatar = z.infer<typeof VideoAvatarSchema>;
+
+export const VideoConfigurationSchema = z.object({
+  aspectRatio: z.enum(['auto', '16:9', '9:16']).default('16:9'),
+  duration: z.enum(['8s', '15s', '30s', '60s', 'Auto']).default('8s'), // For script generation timing
+  actualDuration: z.enum(['8s']).optional().default('8s'), // What Fal.ai actually supports
+  resolution: z.enum(['720p', '1080p']).default('720p'),
+  generateAudio: z.boolean().default(true),
+});
+
+export type VideoConfiguration = z.infer<typeof VideoConfigurationSchema>;
+
+export const VideoScriptSchema = z.object({
+  introduction: z.string(),
+  productHighlights: z.array(z.string()),
+  callToAction: z.string(),
+  tone: z.enum(['professional', 'casual', 'energetic', 'friendly']).default('energetic'),
+  duration: z.number().min(5).max(30).default(15), // seconds
+});
+
+export type VideoScript = z.infer<typeof VideoScriptSchema>;
+
+export const VideoGenerationRequestSchema = z.object({
+  productData: ProductDataSchema,
+  avatar: VideoAvatarSchema,
+  configuration: VideoConfigurationSchema,
+  script: VideoScriptSchema.optional(),
+});
+
+export type VideoGenerationRequest = z.infer<typeof VideoGenerationRequestSchema>;
+
+export const VideoGenerationResponseSchema = z.object({
+  success: z.boolean(),
+  videoUrl: z.string().optional(),
+  script: VideoScriptSchema.optional(),
+  error: z.string().optional(),
+});
+
+export type VideoGenerationResponse = z.infer<typeof VideoGenerationResponseSchema>;
+
+// Lenient product data schema for video script generation
+export const VideoProductDataSchema = z.object({
+  title: z.string().min(1, "Title is required"),
+  description: z.string().min(10, "Description must be at least 10 characters"),
+  price: z.string().min(1, "Price is required"),
+  features: z.array(z.string()).optional().default([]),
+  imageUrl: z.string().optional().default(""),
+});
+
+// Video Script Generation Request
+export const VideoScriptGenerationRequestSchema = z.object({
+  productData: VideoProductDataSchema,
+  tone: z.enum(['professional', 'casual', 'energetic', 'friendly']).optional().default('energetic'),
+  duration: z.number().min(5).max(30).optional().default(15),
+  focusPoints: z.array(z.string()).optional().default([]),
+});
+
+export type VideoScriptGenerationRequest = z.infer<typeof VideoScriptGenerationRequestSchema>;
+
+export const VideoScriptGenerationResponseSchema = z.object({
+  success: z.boolean(),
+  script: VideoScriptSchema.optional(),
+  error: z.string().optional(),
+});
+
+export type VideoScriptGenerationResponse = z.infer<typeof VideoScriptGenerationResponseSchema>;

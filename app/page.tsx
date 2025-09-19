@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Link2, FileEdit } from "lucide-react";
+import { Link2, FileEdit, Video } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
@@ -9,21 +9,26 @@ import {
   AppStatus,
   ProductData,
   GenerateAdResponse,
+  AmazonProduct,
 } from "@/lib/types";
+import { ProductService } from "@/lib/product-service";
 import UrlInput from "@/components/UrlInput";
 import ProductForm from "@/components/ProductForm";
 import GeneratedAd from "@/components/GeneratedAd";
+import VideoGenerator from "@/components/VideoGenerator";
 import GridBeamsBackground from "@/components/ui/grid-beams-background";
 import { AuroraText } from "@/components/magicui/aurora-text";
 
 export default function Home() {
   const [inputMode, setInputMode] = useState<InputMode>("url");
+  const [contentMode, setContentMode] = useState<'image' | 'video'>('image');
   const [status, setStatus] = useState<AppStatus>("idle");
   const [generatedAd, setGeneratedAd] = useState<GenerateAdResponse | null>(
     null
   );
   const [error, setError] = useState<string | null>(null);
   const [productData, setProductData] = useState<ProductData | null>(null);
+  const [rawProductData, setRawProductData] = useState<AmazonProduct | null>(null);
 
   const handleGenerateAd = async (data: ProductData) => {
     // Reset previous ad before generating new one
@@ -73,21 +78,36 @@ export default function Home() {
     setError(null);
 
     try {
-      const scrapeResponse = await fetch("/api/scrape-product", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ url }),
-      });
+      // Check if URL is supported
+      if (!ProductService.isSupportedUrl(url)) {
+        throw new Error("URL not supported. Please use a valid Amazon product URL.");
+      }
 
-      const scrapeResult = await scrapeResponse.json();
+      // Normalize the URL
+      const normalizedUrl = ProductService.normalizeUrl(url);
+
+      // Use ProductService with caching
+      const scrapeResult = await ProductService.fetchProductData(normalizedUrl, {
+        enableCache: true,
+        forceRefresh: false
+      });
 
       if (!scrapeResult.success) {
         throw new Error(scrapeResult.error || "Error scraping product");
       }
 
-      await handleGenerateAd(scrapeResult.data);
+      setProductData(scrapeResult.data);
+
+      // Store raw Amazon product data if available
+      if (scrapeResult.rawData) {
+        setRawProductData(scrapeResult.rawData);
+      }
+
+      if (contentMode === 'image') {
+        await handleGenerateAd(scrapeResult.data);
+      } else {
+        setStatus("idle"); // For video, the VideoGenerator will handle the generation
+      }
     } catch (error) {
       console.error("Error:", error);
       setError(error instanceof Error ? error.message : "Unknown error");
@@ -249,13 +269,40 @@ export default function Home() {
             </h1>
           </div>
           <p className="text-gray-200 text-lg font-medium">
-            Create professional ads with{" "}
+            Create professional {contentMode === 'image' ? 'images' : 'videos'} with{" "}
             <span className="text-yellow-400">Agent AI</span>
           </p>
         </div>
 
         {/* Main Content */}
         <div className="max-w-4xl mx-auto">
+          {/* Content Type Selector */}
+          <div className="flex justify-center mb-6">
+            <div className="bg-gray-800/50 p-1 rounded-lg flex">
+              <button
+                onClick={() => {setContentMode('image'); setGeneratedAd(null);}}
+                className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${
+                  contentMode === 'image'
+                    ? 'bg-blue-600 text-white'
+                    : 'text-gray-400 hover:text-white'
+                }`}
+              >
+                Generate Images
+              </button>
+              <button
+                onClick={() => {setContentMode('video'); setGeneratedAd(null);}}
+                className={`px-4 py-2 rounded-md text-sm font-medium transition-all flex items-center gap-2 ${
+                  contentMode === 'video'
+                    ? 'bg-blue-600 text-white'
+                    : 'text-gray-400 hover:text-white'
+                }`}
+              >
+                <Video className="h-4 w-4" />
+                Generate Videos
+              </button>
+            </div>
+          </div>
+
           <Card className="p-6 bg-gray-900/80 backdrop-blur-sm border-gray-700">
             <Tabs
               value={inputMode}
@@ -275,7 +322,7 @@ export default function Home() {
               <TabsContent value="url">
                 <div className="space-y-4">
                   <p className="text-sm text-gray-400 mb-4">
-                    Enter a product URL to automatically generate an ad
+                    Enter a product URL to automatically generate {contentMode === 'image' ? 'an ad' : 'a video'}
                   </p>
                   <UrlInput
                     onSubmit={handleScrapeAndGenerate}
@@ -287,12 +334,22 @@ export default function Home() {
               <TabsContent value="manual">
                 <div className="space-y-4">
                   <p className="text-sm text-gray-400 mb-4">
-                    Manually enter product information to generate a custom ad
+                    Manually enter product information to generate {contentMode === 'image' ? 'a custom ad' : 'a custom video'}
                   </p>
-                  <ProductForm
-                    onSubmit={handleGenerateAd}
-                    isLoading={status === "generating"}
-                  />
+                  {contentMode === 'image' ? (
+                    <ProductForm
+                      onSubmit={handleGenerateAd}
+                      isLoading={status === "generating"}
+                    />
+                  ) : (
+                    <ProductForm
+                      onSubmit={(data) => {
+                        setProductData(data);
+                        setStatus("idle");
+                      }}
+                      isLoading={false}
+                    />
+                  )}
                 </div>
               </TabsContent>
             </Tabs>
@@ -304,8 +361,8 @@ export default function Home() {
               </div>
             )}
 
-            {/* Generated Ad Display */}
-            {generatedAd && generatedAd.success && (
+            {/* Generated Content Display */}
+            {contentMode === 'image' && generatedAd && generatedAd.success && (
               <div className="mt-6">
                 <GeneratedAd
                   adData={generatedAd}
@@ -314,6 +371,16 @@ export default function Home() {
                   onCreateVariation={handleCreateVariation}
                   onUpdateImage={handleUpdateImage}
                   isProcessing={status === "generating"}
+                />
+              </div>
+            )}
+
+            {/* Video Generator Display */}
+            {contentMode === 'video' && productData && (
+              <div className="mt-6">
+                <VideoGenerator
+                  productData={productData}
+                  rawProductData={rawProductData || undefined}
                 />
               </div>
             )}
@@ -330,7 +397,7 @@ export default function Home() {
               </div>
             )}
 
-            {status === "generating" && (
+            {status === "generating" && contentMode === 'image' && (
               <div className="mt-6 text-center">
                 <div className="inline-flex items-center gap-2">
                   <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-yellow-500"></div>
@@ -342,7 +409,7 @@ export default function Home() {
 
           {/* Footer */}
           <div className="mt-8 text-center text-sm text-gray-400">
-            <p>Powered by Amazon Bedrock• MCP Hackathon</p>
+            <p>Powered by Amazon Bedrock & Fal.ai • MCP Hackathon</p>
           </div>
         </div>
       </div>

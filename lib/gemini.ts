@@ -1,6 +1,6 @@
 import { GoogleGenAI } from "@google/genai";
 import type { Part } from "@google/genai";
-import type { AdPrompt } from "./types";
+import type { AdPrompt, VideoScript } from "./types";
 import { fetchAndProcessImage } from "./image-utils";
 
 const getGeminiClient = () => {
@@ -365,15 +365,105 @@ CRITICAL INSTRUCTION: Use the provided product image as the central element of t
   }
 }
 
+export async function generateVideoScript(productData: {
+  title: string;
+  description: string;
+  price: string;
+  features?: string[];
+  imageUrl?: string;
+}, tone: 'professional' | 'casual' | 'energetic' | 'friendly' = 'energetic', duration: number = 15, focusPoints?: string[]): Promise<VideoScript> {
+  const ai = getGeminiClient();
+
+  const videoPrompt = `You are an expert video script writer for product advertising videos. Your task is to create an engaging video script for a product demonstration video that will feature the SPECIFIC PRODUCT shown in the provided product image.
+
+CRITICAL: This script is for a video that will use the EXACT product shown in the provided product image. The presenter will interact with, hold, and demonstrate this specific product.
+
+Product Information:
+- Product Name: ${productData.title}
+- Description: ${productData.description}
+- Price: ${productData.price}
+${productData.features && productData.features.length > 0 ? `- Features: ${productData.features.join(', ')}` : ''}
+${focusPoints && focusPoints.length > 0 ? `- Focus Points: ${focusPoints.join(', ')}` : ''}
+${productData.imageUrl ? `- Product Image Available: YES (The presenter will interact with this exact product shown in the image)` : '- Product Image Available: NO'}
+
+Video Requirements:
+- Duration: ${duration} seconds
+- Tone: ${tone}
+- Format: Product demonstration with avatar presenter using the ACTUAL PRODUCT
+- Visual: Presenter will hold, point to, and interact with the specific product from the image
+
+Instructions:
+1. Create a compelling introduction that grabs attention and mentions the SPECIFIC product by name
+2. Generate 3-5 key product highlights that can be PHYSICALLY demonstrated with the actual product
+3. Include references to product interactions (e.g., "As you can see here", "Notice this feature", "Let me show you")
+4. Write dialogue that assumes the presenter is holding/showing the actual product
+5. Include a strong call to action that motivates immediate purchase
+6. The script should be natural for a human presenter to say while handling the product
+7. Keep it conversational and engaging, matching the specified tone
+8. Include the product price if provided
+9. Make sure the content fits within the specified duration
+10. IMPORTANT: Write as if the presenter is physically demonstrating the actual product shown in the image
+
+Return ONLY a JSON object with this exact structure:
+{
+  "introduction": "Opening hook that grabs attention and introduces the product",
+  "productHighlights": [
+    "First key benefit or feature to highlight",
+    "Second key benefit or feature to highlight",
+    "Third key benefit or feature to highlight"
+  ],
+  "callToAction": "Compelling closing that motivates action",
+  "tone": "${tone}",
+  "duration": ${duration}
+}
+
+IMPORTANT:
+- Return ONLY the JSON, no additional text or formatting
+- Each section should be written as natural speech for the presenter
+- Product highlights should be specific to the product, not generic
+- Include the price naturally in the script if provided`;
+
+  try {
+    const response = await ai.models.generateContent({
+      model: "gemini-2.5-flash",
+      contents: videoPrompt,
+      config: {
+        temperature: 0.8,
+        responseMimeType: "application/json"
+      }
+    });
+
+    const text = response.candidates?.[0]?.content?.parts?.[0]?.text;
+    if (!text) {
+      throw new Error('No response text from AI');
+    }
+
+    console.log('📋 Video script response received, length:', text.length);
+
+    try {
+      const scriptData = JSON.parse(text);
+      console.log('✅ Video script JSON validated successfully');
+      return scriptData as VideoScript;
+    } catch (parseError) {
+      console.error('❌ Error parsing video script JSON:', parseError);
+      console.error('Content received:', text);
+      throw new Error("Could not generate valid video script JSON");
+    }
+  } catch (error) {
+    console.error("Error generating video script with Gemini:", error);
+    throw error;
+  }
+}
+
 export async function testGeminiConnection() {
   const ai = getGeminiClient();
-  
+
   try {
     const response = await ai.models.generateContent({
       model: "gemini-2.5-flash",
       contents: "Say 'Connection successful' if you can receive this message"
     });
-    
+
     const text = response.candidates?.[0]?.content?.parts?.[0]?.text;
     if (!text) {
       throw new Error('No response text from AI');
