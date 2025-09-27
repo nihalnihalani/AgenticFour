@@ -346,11 +346,25 @@ app.post('/api/copilotkit', async (req, res) => {
 
     // Step 4: Return response based on governance decision
     if (interaction.status === 'blocked') {
+      // Format violations for display
+      const violationList = interaction.violations.map(v => {
+        const violationType = v.type.toUpperCase().replace('_', '_');
+        return `- **${violationType}**: ${v.description}`;
+      }).join('\n');
+
+      const blockedContent = `⚠️ **Content Blocked by EthosLens Governance**
+
+Your request has been blocked due to ${interaction.violations.length} policy violation(s):
+
+${violationList}
+
+Please rephrase your request to comply with our governance policies.`;
+
       return res.json({
         choices: [{
           message: {
             role: 'assistant',
-            content: `⚠️ **Content Blocked by EthosLens Governance**\n\nYour request has been blocked due to ${interaction.violations.length} policy violation(s):\n\n${interaction.violations.map(v => `• **${v.type.toUpperCase()}**: ${v.description}`).join('\n')}\n\nPlease rephrase your request to comply with our governance policies.`
+            content: blockedContent
           }
         }],
         usage: { total_tokens: 0 },

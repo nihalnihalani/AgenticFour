@@ -1,4 +1,5 @@
 import React from 'react';
+import ReactMarkdown from 'react-markdown';
 import { 
   Shield,
   AlertCircle,
@@ -97,7 +98,25 @@ const InteractionContent: React.FC<InteractionContentProps> = ({
       <div>
         <h4 className="text-sm font-medium text-gray-700 mb-2">Output</h4>
         <div className="bg-gray-50 rounded-lg p-3 border">
-          <p className="text-sm text-gray-800 whitespace-pre-wrap">{output}</p>
+          {output.includes('⚠️ **Content Blocked by EthosLens Governance**') ? (
+            <div className="text-sm text-gray-800 prose prose-sm max-w-none">
+              <ReactMarkdown
+                components={{
+                  // Custom styling for blocked content
+                  h1: ({children}) => <h1 className="text-lg font-bold text-red-600 mb-3">{children}</h1>,
+                  h2: ({children}) => <h2 className="text-base font-semibold text-red-600 mb-2">{children}</h2>,
+                  strong: ({children}) => <strong className="font-semibold text-red-700">{children}</strong>,
+                  ul: ({children}) => <ul className="list-disc list-inside space-y-1 ml-4 text-red-800">{children}</ul>,
+                  li: ({children}) => <li className="text-red-800">{children}</li>,
+                  p: ({children}) => <p className="text-gray-700 mb-2 last:mb-0">{children}</p>
+                }}
+              >
+                {output}
+              </ReactMarkdown>
+            </div>
+          ) : (
+            <p className="text-sm text-gray-800 whitespace-pre-wrap">{output}</p>
+          )}
         </div>
       </div>
 
