@@ -8,13 +8,12 @@ import {
   AlertCircle, 
   XCircle,
   Calendar,
-  TrendingUp,
   Download,
   Eye,
   Clock
 } from 'lucide-react';
 import { apiService } from '../api/apiService';
-import { LLMInteraction, Violation } from '../types';
+import { Violation } from '../types';
 import { format } from 'date-fns';
 import EmptyState from '../components/EmptyState';
 import ViolationChart from '../components/ViolationChart';
@@ -70,9 +69,7 @@ const Violations: React.FC = () => {
     };
 
     fetchViolations();
-    const interval = setInterval(fetchViolations, 10000); // Refresh every 10 seconds
-
-    return () => clearInterval(interval);
+    // Auto-refresh removed - data updates only on manual page refresh
   }, []);
 
   useEffect(() => {

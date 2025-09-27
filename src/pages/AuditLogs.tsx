@@ -26,9 +26,7 @@ const AuditLogs: React.FC = () => {
     };
 
     fetchLogs();
-    const interval = setInterval(fetchLogs, 5000);
-
-    return () => clearInterval(interval);
+    // Auto-refresh removed - data updates only on manual page refresh
   }, []);
 
   useEffect(() => {

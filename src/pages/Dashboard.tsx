@@ -27,9 +27,7 @@ const Dashboard: React.FC = () => {
     };
 
     fetchStats();
-    const interval = setInterval(fetchStats, 5000); // Refresh every 5 seconds
-
-    return () => clearInterval(interval);
+    // Auto-refresh removed - data updates only on manual page refresh
   }, []);
 
   const flaggedPercentage = stats.totalInteractions > 0 

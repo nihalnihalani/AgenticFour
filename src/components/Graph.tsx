@@ -75,11 +75,10 @@ const Graph: React.FC = () => {
     }
   }, []);
 
-  // Initial load and auto-refresh
+  // Initial load only - auto-refresh removed
   useEffect(() => {
     fetchGraphData();
-    const interval = setInterval(fetchGraphData, 10000); // Refresh every 10 seconds
-    return () => clearInterval(interval);
+    // Auto-refresh removed - data updates only on manual page refresh
   }, [fetchGraphData]);
 
   // Get node color based on type
