@@ -15,7 +15,7 @@ import { ProductService } from "@/lib/product-service";
 import UrlInput from "@/components/UrlInput";
 import ProductForm from "@/components/ProductForm";
 import GeneratedAd from "@/components/GeneratedAd";
-import VideoGenerator from "@/components/VideoGenerator";
+// import VideoGenerator from "@/components/VideoGenerator"; // Disabled for now
 import GridBeamsBackground from "@/components/ui/grid-beams-background";
 import { AuroraText } from "@/components/magicui/aurora-text";
 
@@ -261,16 +261,16 @@ export default function Home() {
           <div className="flex items-center justify-center gap-2 mb-4">
             <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold tracking-tighter">
               <AuroraText
-                colors={["#ffffff", "#f3f4f6", "#e5e7eb", "#d1d5db"]}
+                colors={["#0078d4", "#106ebe", "#005a9e", "#004578"]}
                 speed={1.2}
               >
-                OneClick
+                PursuAiDe
               </AuroraText>
             </h1>
           </div>
           <p className="text-gray-200 text-lg font-medium">
             Create professional {contentMode === 'image' ? 'images' : 'videos'} with{" "}
-            <span className="text-yellow-400">Agent AI</span>
+            <span className="text-blue-400">Microsoft AI</span>
           </p>
         </div>
 
@@ -290,15 +290,13 @@ export default function Home() {
                 Generate Images
               </button>
               <button
-                onClick={() => {setContentMode('video'); setGeneratedAd(null);}}
-                className={`px-4 py-2 rounded-md text-sm font-medium transition-all flex items-center gap-2 ${
-                  contentMode === 'video'
-                    ? 'bg-blue-600 text-white'
-                    : 'text-gray-400 hover:text-white'
-                }`}
+                onClick={() => {/* Video generation disabled for now */}}
+                className="px-4 py-2 rounded-md text-sm font-medium transition-all flex items-center gap-2 text-gray-600 cursor-not-allowed opacity-50"
+                disabled
+                title="Video generation temporarily disabled"
               >
                 <Video className="h-4 w-4" />
-                Generate Videos
+                Generate Videos (Disabled)
               </button>
             </div>
           </div>
@@ -375,13 +373,12 @@ export default function Home() {
               </div>
             )}
 
-            {/* Video Generator Display */}
+            {/* Video Generator Display - DISABLED */}
             {contentMode === 'video' && productData && (
-              <div className="mt-6">
-                <VideoGenerator
-                  productData={productData}
-                  rawProductData={rawProductData || undefined}
-                />
+              <div className="mt-6 p-6 bg-yellow-900/20 border border-yellow-800 rounded-lg">
+                <p className="text-yellow-400 text-center">
+                  Video generation is temporarily disabled. Please use image generation for now.
+                </p>
               </div>
             )}
 
@@ -409,7 +406,7 @@ export default function Home() {
 
           {/* Footer */}
           <div className="mt-8 text-center text-sm text-gray-400">
-            <p>Powered by Amazon Bedrock & Fal.ai • MCP Hackathon</p>
+            <p>Powered by Microsoft for Startup • Hackathon</p>
           </div>
         </div>
       </div>
