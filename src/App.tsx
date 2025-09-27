@@ -7,6 +7,7 @@ import Dashboard from './pages/Dashboard';
 import LiveMonitor from './pages/LiveMonitor';
 import AuditLogs from './pages/AuditLogs';
 import Violations from './pages/Violations';
+import Agents from './pages/Agents';
 import Settings from './pages/Settings';
 
 function App() {
@@ -23,7 +24,7 @@ function App() {
       case 'violations':
         return <Violations />;
       case 'agents':
-        return <div className="p-6"><h1 className="text-2xl font-bold text-gray-900">Agents</h1><p className="text-gray-600 mt-2">Agent configuration coming soon...</p></div>;
+        return <Agents />;
       case 'settings':
         return <Settings />;
       default:

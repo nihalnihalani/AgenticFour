@@ -121,6 +121,58 @@ class EthosLensGovernance {
     const violations = [];
     const text = `${prompt} ${response}`.toLowerCase();
 
+    console.log('🔍 Analyzing text for violations:', text.substring(0, 200) + '...');
+
+    // Illegal Activities / Hacking Detection (HIGH PRIORITY)
+    const hackingPatterns = [
+      'hack into', 'hack someone', 'break into', 'unauthorized access',
+      'crack password', 'bypass security', 'exploit vulnerability',
+      'ddos attack', 'sql injection', 'phishing', 'malware',
+      'how to hack', 'hacking tutorial', 'illegal access',
+      'steal data', 'breach security', 'network intrusion'
+    ];
+
+    // Data Theft / Confidential Information Requests
+    const dataTheftPatterns = [
+      'share the internal', 'internal database', 'salary database',
+      'confidential data', 'proprietary information', 'company secrets',
+      'employee records', 'customer database', 'financial records',
+      'trade secrets', 'classified information', 'private documents',
+      'leak the data', 'access internal', 'company database',
+      'sensitive information', 'restricted data', 'internal files'
+    ];
+    
+    const foundHackingPattern = hackingPatterns.find(pattern => text.includes(pattern));
+    if (foundHackingPattern) {
+      console.log('🚨 HACKING VIOLATION DETECTED:', foundHackingPattern);
+      violations.push({
+        type: 'illegal_activity',
+        description: 'Illegal hacking or cybersecurity violation detected',
+        reason: 'Content requests assistance with unauthorized access, hacking, or other illegal activities',
+        severity: 9.5,
+        confidence: 0.95,
+        regulatoryFramework: 'Computer Fraud and Abuse Act'
+      });
+    } else {
+      console.log('ℹ️ No hacking patterns found in:', hackingPatterns.slice(0, 5));
+    }
+
+    // Check for data theft / confidential information requests
+    const foundDataTheftPattern = dataTheftPatterns.find(pattern => text.includes(pattern));
+    if (foundDataTheftPattern) {
+      console.log('🚨 DATA THEFT VIOLATION DETECTED:', foundDataTheftPattern);
+      violations.push({
+        type: 'data_theft',
+        description: 'Unauthorized access to confidential information detected',
+        reason: 'Content requests access to proprietary, confidential, or sensitive company data',
+        severity: 9.0,
+        confidence: 0.9,
+        regulatoryFramework: 'Data Protection Act'
+      });
+    } else {
+      console.log('ℹ️ No data theft patterns found in:', dataTheftPatterns.slice(0, 5));
+    }
+
     // PII Detection
     if (text.match(/\b\d{3}-\d{2}-\d{4}\b/) || // SSN
         text.match(/\b\d{16}\b/) || // Credit card
@@ -133,6 +185,32 @@ class EthosLensGovernance {
         confidence: 0.9,
         regulatoryFramework: 'GDPR'
       });
+    }
+
+    // Harmful/Dangerous Content Detection
+    const harmfulPatterns = [
+      'how to make bomb', 'create explosive', 'make poison',
+      'suicide methods', 'self harm', 'hurt someone',
+      'kill someone', 'murder', 'violence against',
+      'how to kill', 'kill my', 'kill him', 'kill her',
+      'murder my', 'murder him', 'murder her',
+      'harm my', 'hurt my', 'attack my',
+      'assassinate', 'eliminate someone'
+    ];
+    
+    const foundHarmfulPattern = harmfulPatterns.find(pattern => text.includes(pattern));
+    if (foundHarmfulPattern) {
+      console.log('🚨 HARMFUL CONTENT VIOLATION DETECTED:', foundHarmfulPattern);
+      violations.push({
+        type: 'harmful_content',
+        description: 'Harmful or dangerous content detected',
+        reason: 'Content may promote violence, self-harm, or dangerous activities',
+        severity: 9.0,
+        confidence: 0.9,
+        regulatoryFramework: 'Content Safety Guidelines'
+      });
+    } else {
+      console.log('ℹ️ No harmful patterns found in:', harmfulPatterns.slice(0, 5));
     }
 
     // Bias Detection
@@ -161,6 +239,7 @@ class EthosLensGovernance {
       });
     }
 
+    console.log(`📊 Total violations detected: ${violations.length}`, violations.map(v => v.type));
     return violations;
   }
 

@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Search, Download, Filter, Activity } from 'lucide-react';
-import { apiService } from '../api/apiService';
 import { LLMInteraction, AuditLogEntry } from '../types';
 import { format } from 'date-fns';
 import EmptyState from '../components/EmptyState';
@@ -18,11 +17,30 @@ const AuditLogs: React.FC = () => {
 
   useEffect(() => {
     const fetchLogs = async () => {
-      const interactions = await apiService.getInteractions();
-      const agentLogs = await apiService.getAuditLogs();
-      setLogs(interactions);
-      setAuditLogs(agentLogs);
-      setFilteredLogs(interactions);
+      try {
+        // Fetch interactions from new backend
+        const response = await fetch('http://localhost:4000/api/interactions');
+        if (response.ok) {
+          const interactions = await response.json();
+          setLogs(interactions);
+          setFilteredLogs(interactions);
+          
+          // Generate audit logs from interactions
+          const generatedAuditLogs = interactions.flatMap((interaction: any) => 
+            interaction.agentActions?.map((action: any, index: number) => ({
+              id: `${interaction.id}_${index}`,
+              timestamp: new Date(action.timestamp || interaction.timestamp),
+              agentName: action.agent || 'PolicyEnforcerAgent',
+              action: action.action || 'analyze',
+              interactionId: interaction.id,
+              details: action.result || `Processed interaction with ${interaction.violations?.length || 0} violations`
+            })) || []
+          );
+          setAuditLogs(generatedAuditLogs);
+        }
+      } catch (error) {
+        console.error('Error fetching audit logs:', error);
+      }
     };
 
     fetchLogs();

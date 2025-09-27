@@ -12,7 +12,6 @@ import {
   Eye,
   Clock
 } from 'lucide-react';
-import { apiService } from '../api/apiService';
 import { Violation } from '../types';
 import { format } from 'date-fns';
 import EmptyState from '../components/EmptyState';
@@ -40,27 +39,31 @@ const Violations: React.FC = () => {
     const fetchViolations = async () => {
       setIsLoading(true);
       try {
-        const interactions = await apiService.getInteractions();
-        const allViolations: ViolationWithContext[] = [];
+        // Fetch interactions from new backend
+        const response = await fetch('http://localhost:4000/api/interactions');
+        if (response.ok) {
+          const interactions = await response.json();
+          const allViolations: ViolationWithContext[] = [];
 
-        interactions.forEach(interaction => {
-          interaction.violations.forEach(violation => {
-            allViolations.push({
-              ...violation,
-              interactionId: interaction.id,
-              timestamp: interaction.timestamp,
-              input: interaction.input,
-              output: interaction.output,
-              status: interaction.status
+          interactions.forEach((interaction: any) => {
+            interaction.violations?.forEach((violation: any) => {
+              allViolations.push({
+                ...violation,
+                interactionId: interaction.id,
+                timestamp: new Date(interaction.timestamp),
+                input: interaction.input,
+                output: interaction.output,
+                status: interaction.status
+              });
             });
           });
-        });
 
-        // Sort by timestamp (newest first)
-        allViolations.sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
-        
-        setViolations(allViolations);
-        setFilteredViolations(allViolations);
+          // Sort by timestamp (newest first)
+          allViolations.sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
+          
+          setViolations(allViolations);
+          setFilteredViolations(allViolations);
+        }
       } catch (error) {
         console.error('Error fetching violations:', error);
       } finally {
