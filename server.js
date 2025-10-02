@@ -2,6 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import neo4j from 'neo4j-driver';
 import { config } from 'dotenv';
+import { governanceService } from './src/services/governanceService.js';
 config();
 
 const app = express();
@@ -338,8 +339,12 @@ app.post('/api/copilotkit', async (req, res) => {
       response = "I apologize, but I'm having trouble generating a response right now. Please try again.";
     }
 
-    // Step 2: Process through EthosLens Governance
-    const interaction = await EthosLensGovernance.processInteraction(prompt, response);
+    // Step 2: Process through EthosLens Governance (now supports both legacy and Inkeep agents)
+    const interaction = await governanceService.processInteraction(prompt, response, {
+      model,
+      timestamp: new Date().toISOString(),
+      source: 'copilotkit'
+    });
 
     // Step 3: Save to Neo4j
     await EthosLensGovernance.saveToNeo4j(interaction);
@@ -456,6 +461,61 @@ app.get('/api/interactions', async (req, res) => {
     res.status(500).json({ error: 'Failed to fetch interactions' });
   } finally {
     await session.close();
+  }
+});
+
+// Governance configuration endpoints
+app.get('/api/governance/status', async (req, res) => {
+  try {
+    const status = governanceService.getStatus();
+    res.json({
+      success: true,
+      governance: status,
+      timestamp: new Date().toISOString()
+    });
+  } catch (error) {
+    console.error('Error getting governance status:', error);
+    res.status(500).json({ error: 'Failed to get governance status' });
+  }
+});
+
+app.post('/api/governance/switch', async (req, res) => {
+  try {
+    const { useInkeep } = req.body;
+    
+    if (typeof useInkeep !== 'boolean') {
+      return res.status(400).json({ error: 'useInkeep must be a boolean' });
+    }
+
+    await governanceService.switchAgentType(useInkeep);
+    const status = governanceService.getStatus();
+    
+    res.json({
+      success: true,
+      message: `Switched to ${status.agentType} agents`,
+      governance: status,
+      timestamp: new Date().toISOString()
+    });
+  } catch (error) {
+    console.error('Error switching governance type:', error);
+    res.status(500).json({ error: 'Failed to switch governance type' });
+  }
+});
+
+app.get('/api/governance/insights', async (req, res) => {
+  try {
+    const { timeframe = 'today' } = req.query;
+    const insights = await governanceService.getGovernanceInsights(timeframe);
+    
+    res.json({
+      success: true,
+      insights,
+      timeframe,
+      timestamp: new Date().toISOString()
+    });
+  } catch (error) {
+    console.error('Error getting governance insights:', error);
+    res.status(500).json({ error: 'Failed to get governance insights' });
   }
 });
 

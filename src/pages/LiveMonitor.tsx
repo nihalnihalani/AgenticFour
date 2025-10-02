@@ -4,11 +4,12 @@ import { CopilotSidebar } from "@copilotkit/react-ui";
 import { useCopilotReadable, useCopilotAction } from "@copilotkit/react-core";
 import InteractionCard from '../components/InteractionCard';
 import PromptTester from '../components/PromptTester';
+import AgentTypeSelector from '../components/AgentTypeSelector';
 import { LLMInteraction } from '../types';
 import { useToast } from '../hooks/useToast';
 import { ToastContainer } from '../components/Toast';
 import EmptyState from '../components/EmptyState';
-import { Activity, RefreshCw, MessageSquare, Bot } from 'lucide-react';
+import { Activity, RefreshCw, MessageSquare, Bot, Zap } from 'lucide-react';
 
 const LiveMonitor: React.FC = () => {
   const [interactions, setInteractions] = useState<LLMInteraction[]>([]);
@@ -230,7 +231,10 @@ const LiveMonitor: React.FC = () => {
       className="p-8 space-y-8 bg-white min-h-screen"
     >
       <div className="flex items-center justify-between border-b border-gray-200 pb-6">
-        <h1 className="text-2xl font-semibold text-black">Live Monitor</h1>
+        <div className="flex items-center space-x-4">
+          <h1 className="text-2xl font-semibold text-black">Live Monitor</h1>
+          <AgentTypeSelector />
+        </div>
         <div className="flex items-center space-x-4">
           <button
             onClick={() => setShowCopilot(!showCopilot)}
