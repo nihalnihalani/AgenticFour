@@ -1,0 +1,54 @@
+services:
+  inkeep-agents-manage-ui:
+    build:
+      context: .
+      dockerfile: Dockerfile.manage-ui
+    environment:
+      - ENVIRONMENT
+      - LOG_LEVEL
+      - INKEEP_AGENTS_MANAGE_API_URL=http://inkeep-agents-manage-api:3002
+      - INKEEP_AGENTS_RUN_API_URL=http://inkeep-agents-run-api:3003
+      - NANGO_SERVER_URL
+      - NANGO_SECRET_KEY
+      - SIGNOZ_URL
+      - SIGNOZ_API_KEY
+    ports:
+      - "3000:3000"
+  inkeep-agents-manage-api:
+    build:
+      context: .
+      dockerfile: Dockerfile.manage-api
+    environment:
+      - ENVIRONMENT
+      - LOG_LEVEL
+      - DB_FILE_NAME=file:/inkeep-agents/db/local.db
+    volumes:
+      - inkeep-agents-db:/inkeep-agents/db
+    ports:
+      - "3002:3002"
+  inkeep-agents-run-api:
+    build:
+      context: .
+      dockerfile: Dockerfile.run-api
+    environment:
+      - ENVIRONMENT
+      - LOG_LEVEL
+      - DB_FILE_NAME=file:/inkeep-agents/db/local.db
+      - ANTHROPIC_API_KEY
+    volumes:
+      - inkeep-agents-db:/inkeep-agents/db
+    ports:
+      - "3003:3003"
+  inkeep-agents-migrate:
+    profiles: [ "migrate" ]
+    build:
+      context: .
+      dockerfile: Dockerfile.migrate
+    environment:
+      - ENVIRONMENT
+      - LOG_LEVEL
+      - DB_FILE_NAME=file:/inkeep-agents/db/local.db
+    volumes:
+      - inkeep-agents-db:/inkeep-agents/db
+volumes:
+  inkeep-agents-db:
